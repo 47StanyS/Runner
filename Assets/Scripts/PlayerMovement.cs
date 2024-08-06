@@ -1,58 +1,38 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-    // InputSystem _palayerInput;
-    // [SerializeField] private float _speed;
-    // [SerializeField] private float _jumpSpeed;
-    // private Rigidbody _rigidbody;
-    //
-    // private Vector3 _playerVector;
-    //
-    // void Awake()
-    // {
-    //     _rigidbody = GetComponent<Rigidbody>();
-    //     _palayerInput = new InputSystem();
-    // }
-    //
-    // private void OnEnable()
-    // {
-    //     _palayerInput.Move.Jump.performed += OnJump();
-    //     move = _palayerInput.Move.Movement;
-    //     _palayerInput.Enable();
-    // }
-    //
-    // private void OnDisable()
-    // {
-    //     _palayerInput.Move.Jump.performed -= OnJump();
-    //     move = _palayerInput.Move.Movement;
-    //     _palayerInput.Disable();
-    // }
-    //
-    // private void OnJump(InputAction.CallbackContext context)
-    // {
-    //     _rigidbody.AddForce(_playerVector * _jumpSpeed, ForceMode.Impulse);
-    // }
-    //
-    // void Update()
-    // {
-    //     
-    // }
-
+    CharacterController characterController;
     private InputSystem _playerInput;
+
+    [Header("Move")]
     [SerializeField] private float _speed;
-    [SerializeField] private float _jumpSpeed;
-    private Rigidbody _rigidbody;
+    [Space]
+    [Header("Jump")]
+    [SerializeField] private float _maxJumpTime = 0.5f;
+    [SerializeField] private float _maxJumpHeight = 1f;
+    [SerializeField] private float _jumpVelocity;
+
+    [SerializeField] private float _gravity = -9.8f;
+    [SerializeField] private float _groundGravity = -.05f;
+
+    [SerializeField] bool _isJumping = false;
+    bool _isJumpPressed = false;
+  
     private Vector2 _moveInput;
     private Vector3 _moveVector;
 
     void Awake()
     {
-        _rigidbody = GetComponent<Rigidbody>();
+        characterController = GetComponent<CharacterController>();
         _playerInput = new InputSystem();
+
+        setupJampVariabls();
+
     }
 
     private void OnEnable()
@@ -77,26 +57,54 @@ public class PlayerMovement : MonoBehaviour
         _moveVector = new Vector3(_moveInput.x, 0, _moveInput.y) * _speed;
     }
 
+    private void setupJampVariabls()
+    {
+        float timeToApex = _maxJumpTime / 2;
+        _gravity = (-2 * _maxJumpHeight) / Mathf.Pow(timeToApex, 2);
+        _jumpVelocity = (2 * _maxJumpHeight) / timeToApex;
+    }
+    private void handleJump()
+    {
+        
+        if (_isJumpPressed && _isJumping && characterController.isGrounded)
+        {
+            _isJumping = false;
+        }
+
+    }
     private void OnJump(InputAction.CallbackContext context)
     {
-        if (IsGrounded())
+        _isJumpPressed = context.ReadValueAsButton();
+        Debug.Log(_isJumpPressed);
+        if (!_isJumping && characterController.isGrounded && _isJumpPressed)
         {
-            _rigidbody.AddForce(Vector3.up * _jumpSpeed, ForceMode.Impulse);
+            _isJumping = true;
+            _moveVector.y = _jumpVelocity;
         }
     }
 
-    private bool IsGrounded()
-    {
-        return Physics.Raycast(transform.position, Vector3.down, 1.1f);
-    }
 
     void Update()
     {
-        Move();
+        
+        Move ();
+        handleGravity();
+        handleJump();
     }
-
+    void handleGravity()
+    {
+        if (characterController.isGrounded)
+        {
+            _moveVector.y = _gravity;
+        }
+        else
+        {
+            _moveVector.y += _gravity * Time.deltaTime;
+        }
+    }
     private void Move()
     {
-        _rigidbody.velocity = new Vector3(_moveVector.x, _rigidbody.velocity.y, _moveVector.z);
+        characterController.Move(_moveVector * Time.deltaTime);
     }
+
 }
