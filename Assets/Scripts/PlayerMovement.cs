@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -18,7 +15,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _jumpVelocity;
 
     [SerializeField] private float _gravity = -9.8f;
-    [SerializeField] private float _groundGravity = -.05f;
+    //[SerializeField] private float _groundGravity = -.05f;
 
     [SerializeField] bool _isJumping = false;
     bool _isJumpPressed = false;
